@@ -10,4 +10,4 @@ fi
 
 printf "{\"driver\":\"postgres\",\"data_source\":\"postgres://$POSTGRESQL_USER:$POSTGRESQL_PASSWORD@$POSTGRESQL_HOST:5432/cfssl\"}" > /var/lib/cfssl/db-config.json
 
-cfssl serve -address=$BIND_ADDRESS -ca=/var/lib/cfssl/data/ca.pem -ca-key=/var/lib/cfssl/data/ca-key.pem
+cfssl serve -address=$BIND_ADDRESS -ca=/var/lib/cfssl/data/ca.pem -ca-key=/var/lib/cfssl/data/ca-key.pem -db-config=/var/lib/cfssl/db-config.json
