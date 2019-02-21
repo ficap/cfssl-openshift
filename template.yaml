@@ -18,7 +18,7 @@ objects:
   - kind: Secret
     apiVersion: v1
     metadata:
-      name: "${NAME}-secret"
+      name: "cfssl-secret"
 
     type: Opaque
     stringData:
@@ -29,7 +29,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: ${NAME}
+      name: cfssl
 
     data:
       bind-address: ${BIND_ADDRESS}
@@ -127,47 +127,44 @@ objects:
                 - name: BIND_ADDRESS
                   valueFrom:
                     configMapKeyRef:
-                      name: ${NAME}
+                      name: cfssl
                       key: bind-address
 
                 - name: LOGLEVEL
                   valueFrom:
                     configMapKeyRef:
-                      name: ${NAME}
+                      name: cfssl
                       key: loglevel
 
                 - name: POSTGRESQL_USER
                   valueFrom:
                     secretKeyRef:
-                      name: ${NAME}-db
+                      name: cfssl-db
                       key: database-user
 
                 - name: POSTGRESQL_PASSWORD
                   valueFrom:
                     secretKeyRef:
-                      name: ${NAME}-db
+                      name: cfssl-db
                       key: database-password
 
-                - name: NAME
-                  value: ${NAME}
-
               volumeMounts:
-                - name: ${NAME}-secret-volume
+                - name: cfssl-secret-volume
                   mountPath: "/var/lib/cfssl/data"
                   readOnly: true
 
               imagePullPolicy: IfNotPresent
 
           volumes:
-            - name: ${NAME}-secret-volume
+            - name: cfssl-secret-volume
               secret:
-                secretName: ${NAME}-secret
+                secretName: cfssl-secret
 
 
   - kind: Service
     apiVersion: v1
     metadata:
-      name: ${NAME}
+      name: cfssl
       annotations:
         template.openshift.io/expose-service_ip_port: "{.spec.clusterIP}:{.spec.ports[?(.name==\"cfssl\")].port}"
         service.alpha.openshift.io/dependencies: '[{"name": "cfssl-db",
@@ -327,11 +324,9 @@ objects:
 
 
 parameters:
-  - name: NAME
-    required: true
-
   - name: APPLICATION_DOMAIN
-    required: true
+    description: Application hostname. Leave blank for autogenerate.
+    value: ''
 
   - name: BIND_ADDRESS
     description: Address to bind
@@ -352,10 +347,14 @@ parameters:
     required: true
 
   - name: POSTGRESQL_USER
-    value: test
+    value: cfssl
+    required: true
 
   - name: POSTGRESQL_PASSWORD
-    value: test
+    generate: expression
+    from: "[a-zA-Z0-9]{16}"
+    required: true
+
 
   - name: POSTGRESQL_STORAGE_CLASS
     value: glusterfs-storage
